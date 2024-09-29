@@ -24,13 +24,14 @@ class PostAdapter extends TypeAdapter<Post> {
       comments: fields[4] as int,
       description: fields[5] as String,
       date: fields[6] as String,
+      postImageBase64: fields[7] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Post obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.profileImage)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class PostAdapter extends TypeAdapter<Post> {
       ..writeByte(5)
       ..write(obj.description)
       ..writeByte(6)
-      ..write(obj.date);
+      ..write(obj.date)
+      ..writeByte(7)
+      ..write(obj.postImageBase64);
   }
 
   @override

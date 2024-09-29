@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
 //import 'screens/explore_screen.dart';
-//import 'screens/upload_screen.dart';
+import 'screens/upload_screen.dart';
 import 'screens/profile_screen.dart';
 
 import 'package:hive/hive.dart';
@@ -42,7 +42,7 @@ class _MainScreenState extends State<MainScreen> {
   static List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
     HomeScreen(), //ExploreScreen(),
-    HomeScreen(), //UploadScreen(),
+    UploadScreen(),
     ProfileScreen(),
   ];
 

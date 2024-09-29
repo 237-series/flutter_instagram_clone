@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart'; 
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/post_model.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,8 +17,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late Box<Post> postBox; // Hive 박스 선언
-
-
 
   int _selectedTab = 0; // 0: 포스트 모아보기, 1: 내가 태그된 사진
   late Map<String, dynamic> profileData; // 프로필 데이터
@@ -41,7 +42,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     profileData = widget.profileData ?? defaultProfileData; // 프로필 데이터 설정
     postBox = Hive.box<Post>('posts'); // Hive 박스 열기
-
   }
 
   @override
@@ -112,7 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildStatColumn(String count, String label) {
     return Column(
       children: [
-        Text(count, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        Text(count,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         Text(label),
       ],
     );
@@ -163,6 +164,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             itemCount: box.length,
             itemBuilder: (context, index) {
               final post = box.getAt(index)!; // Hive Box에서 포스트 불러오기
+              if (post.postImageBase64 != null) {
+                var postImageBase64 = post.postImageBase64!;
+                // Base64 문자열을 바이트 데이터로 변환
+                Uint8List postImageBytes = base64Decode(postImageBase64);
+                //postImage = 'data:image/jpeg;base64,${postImageBytes}';
+                return Image.memory(
+                  postImageBytes,
+                  fit: BoxFit.cover,
+                  height: 300,
+                  width: double.infinity,
+                );
+              }
+
               return Image.asset(
                 post.postImage, // Hive의 postImage 사용
                 fit: BoxFit.cover,
@@ -190,6 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
   }
+
   // 햄버거 메뉴 버튼
   Widget _buildMenuButton() {
     return IconButton(

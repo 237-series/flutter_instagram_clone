@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'dart:convert'; // Base64 디코딩을 위해 추가
 
 import 'package:hive/hive.dart';  
 import 'package:hive_flutter/hive_flutter.dart';
@@ -107,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         'profileImage': post.profileImage,
                         'username': post.username,
                       }),
-                      buildPostImage(post.postImage),
+                      buildPostImage(post),
                       buildPostFooter({
                         'likes': post.likes,
                         'comments': post.comments,
@@ -147,7 +150,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // 게시물 이미지
-  Widget buildPostImage(String postImage) {
+  Widget buildPostImage(Post post) {
+    String postImage = post.postImage;
+    
+    if (post.postImageBase64 != null) {
+      var postImageBase64 = post.postImageBase64!;
+      // Base64 문자열을 바이트 데이터로 변환
+      Uint8List postImageBytes = base64Decode(postImageBase64);
+      //postImage = 'data:image/jpeg;base64,${postImageBytes}';
+      return Image.memory(
+        postImageBytes,
+        fit: BoxFit.cover,
+        height: 300,
+        width: double.infinity,
+      );
+    }
+
     return Image.asset(
       postImage,
       fit: BoxFit.cover,

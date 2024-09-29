@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:hive/hive.dart';
 
 part 'post_model.g.dart'; // Hive generator가 생성한 파일
@@ -18,6 +20,9 @@ class Post {
   final String description;
   @HiveField(6) // HiveField 어노테이션 추가
   final String date;
+  @HiveField(7) // HiveField 어노테이션 추가
+  final String? postImageBase64;
+
 
   Post({
     required this.profileImage,
@@ -27,5 +32,6 @@ class Post {
     required this.comments,
     required this.description,
     required this.date,
+    this.postImageBase64,
   });
 }
