@@ -1,7 +1,4 @@
-import 'dart:typed_data';
-
 import 'package:hive/hive.dart';
-
 part 'post_model.g.dart'; // Hive generator가 생성한 파일
 
 @HiveType(typeId: 0) // HiveType 어노테이션 추가
