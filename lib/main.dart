@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 //import 'screens/explore_screen.dart';
 //import 'screens/upload_screen.dart';
-//import 'screens/profile_screen.dart';
+import 'screens/profile_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -33,9 +33,9 @@ class _MainScreenState extends State<MainScreen> {
   // 각 탭에 연결될 화면 리스트
   static List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
-    //ExploreScreen(),
-    //UploadScreen(),
-    //ProfileScreen(),
+    HomeScreen(), //ExploreScreen(),
+    HomeScreen(), //UploadScreen(),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
