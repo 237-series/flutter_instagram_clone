@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart'; 
+import '../models/post_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? profileData; // nullable로 유지
@@ -10,11 +13,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  late Box<Post> postBox; // Hive 박스 선언
+
+
+
   int _selectedTab = 0; // 0: 포스트 모아보기, 1: 내가 태그된 사진
   late Map<String, dynamic> profileData; // 프로필 데이터
 
   final Map<String, dynamic> defaultProfileData = {
-    'profileImage': 'assets/images/profile1.jpg',
+    'profileImage': 'assets/images/profile_default.png',
     'username': 'user1',
     'posts': 4,
     'followers': 120,
@@ -33,6 +40,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     profileData = widget.profileData ?? defaultProfileData; // 프로필 데이터 설정
+    postBox = Hive.box<Post>('posts'); // Hive 박스 열기
+
   }
 
   @override
@@ -134,23 +143,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // 포스트 미리보기 그리드 또는 내가 태그된 사진 그리드
   Widget _buildPostGrid() {
-    final images = _selectedTab == 0 ? profileData['postImages'] : profileData['taggedImages'];
+    if (_selectedTab == 0) {
+      // 포스트 모아보기: Hive에서 데이터를 불러와서 표시
+      return ValueListenableBuilder(
+        valueListenable: postBox.listenable(),
+        builder: (context, Box<Post> box, _) {
+          if (box.isEmpty) {
+            return Center(child: Text('No posts available.'));
+          }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 2,
-        mainAxisSpacing: 2,
-      ),
-      itemCount: images.length,
-      itemBuilder: (context, index) {
-        return Image.asset(images[index], fit: BoxFit.cover);
-      },
-    );
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 2,
+              mainAxisSpacing: 2,
+            ),
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              final post = box.getAt(index)!; // Hive Box에서 포스트 불러오기
+              return Image.asset(
+                post.postImage, // Hive의 postImage 사용
+                fit: BoxFit.cover,
+              );
+            },
+          );
+        },
+      );
+    } else {
+      // 내가 태그된 사진: 기존의 taggedImages 사용
+      final images = profileData['taggedImages'];
+
+      return GridView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
+        ),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          return Image.asset(images[index], fit: BoxFit.cover);
+        },
+      );
+    }
   }
-
   // 햄버거 메뉴 버튼
   Widget _buildMenuButton() {
     return IconButton(

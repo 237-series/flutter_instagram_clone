@@ -5,7 +5,15 @@ import 'screens/home_screen.dart';
 //import 'screens/upload_screen.dart';
 import 'screens/profile_screen.dart';
 
-void main() {
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'models/post_model.dart';
+
+void main() async { // async 추가
+  await Hive.initFlutter(); // await 추가
+  Hive.registerAdapter(PostAdapter()); // PostAdapter 등록  
+  await Hive.openBox<Post>('posts'); // await 추가
+
   runApp(MyApp());
 }
 

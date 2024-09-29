@@ -1,6 +1,20 @@
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+import 'package:hive/hive.dart';  
+import 'package:hive_flutter/hive_flutter.dart';
+import '../models/post_model.dart';
+
+//class HomeScreen extends StatelessWidget {
+
+
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Box<Post> postBox;
+
   // 포스트 데이터 목록
   final List<Map<String, dynamic>> posts = [
     {
@@ -30,7 +44,39 @@ class HomeScreen extends StatelessWidget {
       'description': 'Delicious homemade pasta',
       'date': '3 days ago',
     },
+    
   ];
+
+
+  @override
+  void initState() {
+    super.initState();
+    // 변경된 코드: Hive의 "post" 박스 열기
+    postBox = Hive.box<Post>('posts');
+
+    // 만약 박스에 데이터가 없다면 샘플 데이터를 저장
+    if (postBox.isEmpty) {
+      _addSamplePosts();
+    }
+  }
+
+
+  // 변경된 코드: 샘플 데이터를 Hive에 저장하는 함수
+  void _addSamplePosts() {
+    for (var post in posts) {
+      final newPost = Post(
+        profileImage: post['profileImage'],
+        username: post['username'],
+        postImage: post['postImage'],
+        likes: post['likes'],
+        comments: post['comments'],
+        description: post['description'],
+        date: post['date'],
+      );
+      postBox.add(newPost);  // 각 포스트를 Hive에 저장
+    }
+    setState(() {});  // 상태 갱신하여 화면에 반영
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,28 +84,50 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Home'),
       ),
-      body: ListView.builder(
-        itemCount: posts.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildPostHeader(posts[index]),
-                  buildPostImage(posts[index]['postImage']),
-                  buildPostFooter(posts[index]),
-                  buildPostDescription(posts[index]),
-                  buildPostDate(posts[index]['date']),
-                ],
-              ),
-            ),
+      // 변경된 코드: Hive 데이터를 사용하기 위해 ValueListenableBuilder 추가
+      body: ValueListenableBuilder(
+        valueListenable: postBox.listenable(),
+        builder: (context, Box<Post> box, _) {
+          if (box.isEmpty) {
+            return Center(child: Text('No posts available.'));
+          }
+
+          return ListView.builder(
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              Post post = box.getAt(index)!;  // Hive 박스에서 포스트 불러오기
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 변경된 코드: 포스트 데이터를 Hive에서 가져온 데이터로 대체
+                      buildPostHeader({
+                        'profileImage': post.profileImage,
+                        'username': post.username,
+                      }),
+                      buildPostImage(post.postImage),
+                      buildPostFooter({
+                        'likes': post.likes,
+                        'comments': post.comments,
+                      }),
+                      buildPostDescription({
+                        'username': post.username,
+                        'description': post.description,
+                      }),
+                      buildPostDate(post.date),
+                    ],
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
+
 
   // 프로필 이미지, 닉네임, 팔로우 버튼
   Widget buildPostHeader(Map<String, dynamic> post) {
