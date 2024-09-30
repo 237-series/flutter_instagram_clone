@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
 import '../models/post_model.dart';
+import 'card_detail_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final Map<String, dynamic>? profileData; // nullable로 유지
@@ -143,67 +144,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 포스트 미리보기 그리드 또는 내가 태그된 사진 그리드
-  Widget _buildPostGrid() {
-    if (_selectedTab == 0) {
-      // 포스트 모아보기: Hive에서 데이터를 불러와서 표시
-      return ValueListenableBuilder(
-        valueListenable: postBox.listenable(),
-        builder: (context, Box<Post> box, _) {
-          if (box.isEmpty) {
-            return Center(child: Text('No posts available.'));
-          }
+Widget _buildPostGrid() {
+  if (_selectedTab == 0) {
+    return ValueListenableBuilder(
+      valueListenable: postBox.listenable(),
+      builder: (context, Box<Post> box, _) {
+        if (box.isEmpty) {
+          return Center(child: Text('No posts available.'));
+        }
 
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 2,
-              mainAxisSpacing: 2,
-            ),
-            itemCount: box.length,
-            itemBuilder: (context, index) {
-              final post = box.getAt(index)!; // Hive Box에서 포스트 불러오기
-              if (post.postImageBase64 != null) {
-                var postImageBase64 = post.postImageBase64!;
-                // Base64 문자열을 바이트 데이터로 변환
-                Uint8List postImageBytes = base64Decode(postImageBase64);
-                //postImage = 'data:image/jpeg;base64,${postImageBytes}';
-                return Image.memory(
-                  postImageBytes,
-                  fit: BoxFit.cover,
-                  height: 300,
-                  width: double.infinity,
-                );
-              }
-
-              return Image.asset(
-                post.postImage, // Hive의 postImage 사용
-                fit: BoxFit.cover,
-              );
-            },
-          );
-        },
-      );
-    } else {
-      // 내가 태그된 사진: 기존의 taggedImages 사용
-      final images = profileData['taggedImages'];
-
-      return GridView.builder(
-        shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 2,
-          mainAxisSpacing: 2,
-        ),
-        itemCount: images.length,
-        itemBuilder: (context, index) {
-          return Image.asset(images[index], fit: BoxFit.cover);
-        },
-      );
-    }
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 2,
+            mainAxisSpacing: 2,
+          ),
+          itemCount: box.length,
+          itemBuilder: (context, index) {
+            final post = box.getAt(index)!;
+            return _buildPostTile(post); // 중복된 GestureDetector 로직을 함수로 분리
+          },
+        );
+      },
+    );
+  } else {
+    final images = profileData['taggedImages'];
+    return _buildImageGrid(images);
   }
+}
+
+// 포스트 타일을 생성하는 함수 (GestureDetector와 이미지 로직 분리)
+Widget _buildPostTile(Post post) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PostCardDetail(post: post),
+        ),
+      );
+    },
+    child: post.postImageBase64 != null
+        ? _buildMemoryImage(post.postImageBase64!)
+        : Image.asset(post.postImage, fit: BoxFit.cover),
+  );
+}
+
+// Base64 이미지를 메모리에서 불러와 표시하는 함수
+Widget _buildMemoryImage(String base64Image) {
+  Uint8List imageBytes = base64Decode(base64Image);
+  return Image.memory(imageBytes, fit: BoxFit.cover, height: 300, width: double.infinity);
+}
+
+// 태그된 사진을 표시하는 GridView 빌더
+Widget _buildImageGrid(List<String> images) {
+  return GridView.builder(
+    shrinkWrap: true,
+    physics: NeverScrollableScrollPhysics(),
+    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 3,
+      crossAxisSpacing: 2,
+      mainAxisSpacing: 2,
+    ),
+    itemCount: images.length,
+    itemBuilder: (context, index) {
+      return Image.asset(images[index], fit: BoxFit.cover);
+    },
+  );
+}
 
   // 햄버거 메뉴 버튼
   Widget _buildMenuButton() {
